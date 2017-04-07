@@ -2,7 +2,11 @@
 
 var GDOCKEY = '1YldbZLeOcR1X553RzMOmAt2w6xOJmbE8cJ4mm4PSkD8';
 var dataUrl = 'https://spreadsheets.google.com/feeds/list/' + GDOCKEY + '/1/public/values?alt=json-in-script';
+
 var masterArray = [];
+var playlist;
+var player;
+var currentVideoIndex = 0;
 
 // get data from Google spreadsheet
 $.ajax({
@@ -13,6 +17,7 @@ $.ajax({
   }
 });
 
+// put spreadsheet data into a nice clean array
 function cleanseData(data) {
   var rawData = data.feed.entry;
   var cleanData = [];
@@ -44,14 +49,55 @@ function shuffle(array) {
 
 // convert timestamp to seconds
 function toSeconds(timestamp) {
-  return timestamp.split(':')[0] * 60 + timestamp.split(':')[1];
+  return parseInt(timestamp.split(':')[0]) * 60 + parseInt(timestamp.split(':')[1]);
 };
 
-// do something
+function getStartSeconds(videoObj, padding=3) {
+  return toSeconds(videoObj.sectionstart) - padding;
+};
+function getEndSeconds(videoObj, padding=3) {
+  return toSeconds(videoObj.sectionend) + padding;
+};
+
+// do stuff
 $(document).on('ajaxComplete', function() {
-  var randomized = shuffle(masterArray);
+  playlist = shuffle(masterArray);
 
-  for (var i = 0; i < randomized.length; i++) {
-
-  }
+  // load the YouTube Player API code asynchronously
+  var tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 });
+
+// executes as soon as YouTube Player API code downloads
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('player', {
+    width: '640',
+    height: '390',
+    events: {
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange
+    }
+  });
+};
+
+function onPlayerReady(event) {
+  loadVideo(playlist[currentVideoIndex]);
+};
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    currentVideoIndex++;
+    loadVideo(playlist[currentVideoIndex]);
+  }
+};
+
+function loadVideo(videoObj) {
+  player.loadVideoById({
+    'videoId': videoObj.videoid,
+    'startSeconds': getStartSeconds(videoObj),
+    'endSeconds': getEndSeconds(videoObj),
+    'suggestedQuality': 'large'
+  });
+};
