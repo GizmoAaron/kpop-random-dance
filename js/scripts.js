@@ -87,7 +87,7 @@ function onPlayerReady(event) {
 };
 
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.ENDED) {
+  if (event.data === YT.PlayerState.PAUSED && currentVideoIndex < playlist.length - 1) {
     currentVideoIndex++;
     loadVideo(playlist[currentVideoIndex]);
   }
