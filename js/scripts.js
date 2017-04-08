@@ -3,17 +3,18 @@
 var GDOCKEY = '1YldbZLeOcR1X553RzMOmAt2w6xOJmbE8cJ4mm4PSkD8';
 var dataUrl = 'https://spreadsheets.google.com/feeds/list/' + GDOCKEY + '/1/public/values?alt=json-in-script';
 
-var masterArray = [];
+var masterList = [];
 var playlist;
 var player;
 var currentVideoIndex = 0;
+var countdown = $('#countdown')[0];
 
 // get data from Google spreadsheet
 $.ajax({
   url: dataUrl,
   dataType: 'jsonp',
   success: function(data) {
-    masterArray = cleanseData(data);
+    masterList = cleanseData(data);
   }
 });
 
@@ -61,7 +62,7 @@ function getEndSeconds(videoObj, padding=3) {
 
 // do stuff
 $(document).on('ajaxComplete', function() {
-  playlist = shuffle(masterArray);
+  playlist = shuffle(masterList);
 
   // load the YouTube Player API code asynchronously
   var tag = document.createElement('script');
@@ -73,8 +74,8 @@ $(document).on('ajaxComplete', function() {
 // executes as soon as YouTube Player API code downloads
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
-    width: '640',
-    height: '390',
+    width: '100%',
+    height: '100%',
     events: {
       'onReady': onPlayerReady,
       'onStateChange': onPlayerStateChange
@@ -87,17 +88,22 @@ function onPlayerReady(event) {
 };
 
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PAUSED && currentVideoIndex < playlist.length - 1) {
-    currentVideoIndex++;
-    loadVideo(playlist[currentVideoIndex]);
+  console.log(event.data);
+  if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == getEndSeconds(playlist[currentVideoIndex]) && currentVideoIndex < playlist.length - 1) {
+      currentVideoIndex++;
+      loadVideo(playlist[currentVideoIndex]);
   }
 };
 
 function loadVideo(videoObj) {
-  player.loadVideoById({
-    'videoId': videoObj.videoid,
-    'startSeconds': getStartSeconds(videoObj),
-    'endSeconds': getEndSeconds(videoObj),
-    'suggestedQuality': 'large'
+  console.log(videoObj.artist + ' - ' + videoObj.song);
+  countdown.play();
+  countdown.addEventListener('ended', function() {
+    player.loadVideoById({
+      'videoId': videoObj.videoid,
+      'startSeconds': getStartSeconds(videoObj),
+      'endSeconds': getEndSeconds(videoObj),
+      'suggestedQuality': 'large'
+    });
   });
 };
