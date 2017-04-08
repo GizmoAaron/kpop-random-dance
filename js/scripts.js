@@ -3,7 +3,7 @@
 var GDOCKEY = '1YldbZLeOcR1X553RzMOmAt2w6xOJmbE8cJ4mm4PSkD8';
 var dataUrl = 'https://spreadsheets.google.com/feeds/list/' + GDOCKEY + '/1/public/values?alt=json-in-script';
 
-var masterArray = [];
+var masterList = [];
 var playlist;
 var player;
 var currentVideoIndex = 0;
@@ -14,7 +14,7 @@ $.ajax({
   url: dataUrl,
   dataType: 'jsonp',
   success: function(data) {
-    masterArray = cleanseData(data);
+    masterList = cleanseData(data);
   }
 });
 
@@ -62,7 +62,7 @@ function getEndSeconds(videoObj, padding=3) {
 
 // do stuff
 $(document).on('ajaxComplete', function() {
-  playlist = shuffle(masterArray);
+  playlist = shuffle(masterList);
 
   // load the YouTube Player API code asynchronously
   var tag = document.createElement('script');
@@ -89,9 +89,9 @@ function onPlayerReady(event) {
 
 function onPlayerStateChange(event) {
   console.log(event.data);
-  if (event.data === YT.PlayerState.PAUSED && currentVideoIndex < playlist.length - 1) {
-    currentVideoIndex++;
-    loadVideo(playlist[currentVideoIndex]);
+  if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == getEndSeconds(playlist[currentVideoIndex]) && currentVideoIndex < playlist.length - 1) {
+      currentVideoIndex++;
+      loadVideo(playlist[currentVideoIndex]);
   }
 };
 
