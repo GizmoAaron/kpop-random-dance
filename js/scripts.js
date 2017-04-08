@@ -7,6 +7,7 @@ var masterArray = [];
 var playlist;
 var player;
 var currentVideoIndex = 0;
+var countdown = $('#countdown')[0];
 
 // get data from Google spreadsheet
 $.ajax({
@@ -87,6 +88,7 @@ function onPlayerReady(event) {
 };
 
 function onPlayerStateChange(event) {
+  console.log(event.data);
   if (event.data === YT.PlayerState.PAUSED && currentVideoIndex < playlist.length - 1) {
     currentVideoIndex++;
     loadVideo(playlist[currentVideoIndex]);
@@ -94,10 +96,14 @@ function onPlayerStateChange(event) {
 };
 
 function loadVideo(videoObj) {
-  player.loadVideoById({
-    'videoId': videoObj.videoid,
-    'startSeconds': getStartSeconds(videoObj),
-    'endSeconds': getEndSeconds(videoObj),
-    'suggestedQuality': 'large'
+  console.log(videoObj.artist + ' - ' + videoObj.song);
+  countdown.play();
+  countdown.addEventListener('ended', function() {
+    player.loadVideoById({
+      'videoId': videoObj.videoid,
+      'startSeconds': getStartSeconds(videoObj),
+      'endSeconds': getEndSeconds(videoObj),
+      'suggestedQuality': 'large'
+    });
   });
 };
