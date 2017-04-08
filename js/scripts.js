@@ -74,8 +74,8 @@ $(document).on('ajaxComplete', function() {
 // executes as soon as YouTube Player API code downloads
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
-    width: '640',
-    height: '390',
+    width: '100%',
+    height: '100%',
     events: {
       'onReady': onPlayerReady,
       'onStateChange': onPlayerStateChange
