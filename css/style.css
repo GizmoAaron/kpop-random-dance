@@ -2,13 +2,10 @@ body {
   background: #000;
   width: 100vw;
   height: 100vh;
-  position: relative;
+  margin: 0;
 }
 
 #player {
   display: block;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  margin: auto;
 }
