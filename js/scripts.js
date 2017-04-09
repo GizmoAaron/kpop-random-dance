@@ -7,7 +7,17 @@ var masterList = [];
 var playlist;
 var player;
 var currentVideoIndex = 0;
-var countdown = $('#countdown')[0];
+var countdown = $('#audio')[0];
+var endSecondsTemp;
+
+var settings = {
+  // play countdown between songs
+  countdown: true,
+  // play dance practice video instead of MV, if available
+  dp: false,
+  // number of seconds to add before and after dance section
+  padding: 3
+};
 
 // get data from Google spreadsheet
 $.ajax({
@@ -37,6 +47,77 @@ function cleanseData(data) {
   return cleanData;
 };
 
+// do stuff
+$(document).on('ajaxComplete', function() {
+  playlist = shuffle(masterList);
+
+  // load the YouTube Player API code asynchronously
+  var tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+});
+
+// executes as soon as YouTube Player API code downloads
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('player', {
+    width: '640',
+    height: '390',
+    events: {
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange,
+      'onError': onPlayerError
+    }
+  });
+};
+
+function onPlayerReady(event) {
+  loadVideo(playlist[currentVideoIndex]);
+};
+
+function onPlayerStateChange(event) {
+  // console.log(event.data);
+  if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == endSecondsTemp && currentVideoIndex < playlist.length - 1) {
+      currentVideoIndex++;
+      loadVideo(playlist[currentVideoIndex]);
+  }
+};
+
+function onPlayerError(event) {
+  currentVideoIndex++;
+  loadVideo(playlist[currentVideoIndex]);
+};
+
+function loadVideo(videoObj) {
+  // console.log(videoObj.artist + ' - ' + videoObj.song);
+  if (settings.countdown) {
+    countdown.play();
+    countdown.addEventListener('ended', function() {
+      player.loadVideoById({
+        'videoId': dpOK(videoObj) ? videoObj.dpid : videoObj.mvid,
+        'startSeconds': getStartSeconds(videoObj),
+        'endSeconds': getEndSeconds(videoObj),
+        'suggestedQuality': 'large'
+      });
+    });
+  } else {
+    player.loadVideoById({
+      'videoId': dpOK(videoObj) ? videoObj.dpid : videoObj.mvid,
+      'startSeconds': getStartSeconds(videoObj),
+      'endSeconds': getEndSeconds(videoObj),
+      'suggestedQuality': 'large'
+    });
+  }
+  
+  // mirror the dance practice video if not already mirrored
+  if (dpOK(videoObj) && videoObj.mirror == 'FALSE')
+    $('#player').addClass('mirror');
+  else
+    $('#player').removeClass('mirror');
+  
+  endSecondsTemp = getEndSeconds(videoObj);
+};
+
 // Durstenfeld shuffle
 function shuffle(array) {
   for (var i = array.length - 1; i > 0; i--) {
@@ -53,63 +134,20 @@ function toSeconds(timestamp) {
   return parseInt(timestamp.split(':')[0]) * 60 + parseInt(timestamp.split(':')[1]);
 };
 
-function getStartSeconds(videoObj, padding=3) {
-  return toSeconds(videoObj.sectionstart) - padding;
+// helper functions
+function dpOK(videoObj) {
+  return settings.dp && videoObj.dpid !== '';
+}
+function getStartSeconds(videoObj) {
+  return toSeconds(dpOK(videoObj) ? videoObj.dpstart : videoObj.mvstart) - settings.padding;
 };
-function getEndSeconds(videoObj, padding=3) {
-  return toSeconds(videoObj.sectionend) + padding;
+function getEndSeconds(videoObj) {
+  return toSeconds(dpOK(videoObj) ? videoObj.dpend : videoObj.mvend) + settings.padding;
 };
 
-// do stuff
-$(document).on('ajaxComplete', function() {
-  playlist = shuffle(masterList);
-
-  // load the YouTube Player API code asynchronously
-  var tag = document.createElement('script');
-  tag.src = "https://www.youtube.com/iframe_api";
-  var firstScriptTag = document.getElementsByTagName('script')[0];
-  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+// update settings
+$('#settings *').on('change', function() {
+  settings.countdown = $('input#countdown').prop('checked');
+  settings.dp = $('input#dp').prop('checked');
+  settings.padding = parseInt($('select#padding').val());
 });
-
-// executes as soon as YouTube Player API code downloads
-function onYouTubeIframeAPIReady() {
-  player = new YT.Player('player', {
-    width: '100%',
-    height: '100%',
-    events: {
-      'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange,
-      'onError': onPlayerError
-    }
-  });
-};
-
-function onPlayerReady(event) {
-  loadVideo(playlist[currentVideoIndex]);
-};
-
-function onPlayerStateChange(event) {
-  console.log(event.data);
-  if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == getEndSeconds(playlist[currentVideoIndex]) && currentVideoIndex < playlist.length - 1) {
-      currentVideoIndex++;
-      loadVideo(playlist[currentVideoIndex]);
-  }
-};
-
-function onPlayerError(event) {
-  currentVideoIndex++;
-  loadVideo(playlist[currentVideoIndex]);
-};
-
-function loadVideo(videoObj) {
-  console.log(videoObj.artist + ' - ' + videoObj.song);
-  countdown.play();
-  countdown.addEventListener('ended', function() {
-    player.loadVideoById({
-      'videoId': videoObj.videoid,
-      'startSeconds': getStartSeconds(videoObj),
-      'endSeconds': getEndSeconds(videoObj),
-      'suggestedQuality': 'large'
-    });
-  });
-};
