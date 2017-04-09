@@ -78,7 +78,8 @@ function onYouTubeIframeAPIReady() {
     height: '100%',
     events: {
       'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange
+      'onStateChange': onPlayerStateChange,
+      'onError': onPlayerError
     }
   });
 };
@@ -93,6 +94,11 @@ function onPlayerStateChange(event) {
       currentVideoIndex++;
       loadVideo(playlist[currentVideoIndex]);
   }
+};
+
+function onPlayerError(event) {
+  currentVideoIndex++;
+  loadVideo(playlist[currentVideoIndex]);
 };
 
 function loadVideo(videoObj) {
