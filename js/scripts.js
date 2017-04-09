@@ -8,6 +8,7 @@ var playlist;
 var player;
 var currentVideoIndex = 0;
 var countdown = $('#audio')[0];
+var endSecondsTemp;
 
 var settings = {
   // play countdown between songs
@@ -15,8 +16,7 @@ var settings = {
   // play dance practice video instead of MV, if available
   dp: false,
   // number of seconds to add before and after dance section
-  padding: 3,
-  paddingTemp: 3
+  padding: 3
 };
 
 // get data from Google spreadsheet
@@ -93,8 +93,7 @@ function onPlayerReady(event) {
 
 function onPlayerStateChange(event) {
   // console.log(event.data);
-  if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == getEndSeconds(playlist[currentVideoIndex]) && currentVideoIndex < playlist.length - 1) {
-      settings.padding = settings.paddingTemp;
+  if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == endSecondsTemp && currentVideoIndex < playlist.length - 1) {
       currentVideoIndex++;
       loadVideo(playlist[currentVideoIndex]);
   }
@@ -125,7 +124,7 @@ function loadVideo(videoObj) {
       'suggestedQuality': 'large'
     });
   }
-  
+  endSecondsTemp = getEndSeconds(videoObj);
 };
 
 // helper functions
@@ -136,7 +135,6 @@ function getStartSeconds(videoObj) {
   return toSeconds(dpOK(videoObj) ? videoObj.dpstart : videoObj.mvstart) - settings.padding;
 };
 function getEndSeconds(videoObj) {
-  console.log(toSeconds(dpOK(videoObj) ? videoObj.dpend : videoObj.mvend) + settings.padding);
   return toSeconds(dpOK(videoObj) ? videoObj.dpend : videoObj.mvend) + settings.padding;
 };
 
@@ -144,5 +142,5 @@ function getEndSeconds(videoObj) {
 $('#settings *').on('change', function() {
   settings.countdown = $('input#countdown').prop('checked');
   settings.dp = $('input#dp').prop('checked');
-  settings.paddingTemp = parseInt($('select#padding').val());
+  settings.padding = parseInt($('select#padding').val());
 });
