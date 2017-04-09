@@ -18,3 +18,9 @@ body {
   display: inline-block;
   margin: 0 1rem;
 }
+
+.mirror {
+  -moz-transform: scaleX(-1);
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
