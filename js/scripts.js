@@ -72,11 +72,29 @@ function onYouTubeIframeAPIReady() {
 };
 
 function onPlayerReady(event) {
+  player.setVolume(0);
   loadVideo(playlist[currentVideoIndex]);
 };
 
 function onPlayerStateChange(event) {
   // console.log(event.data);
+  var currentVideo = playlist[currentVideoIndex];
+
+  // fade in video volume when it starts playing
+  if (event.data === YT.PlayerState.PLAYING && Math.round(player.getCurrentTime()) == getStartSeconds(currentVideo)) {
+    var paddingTemp = settings.padding;
+    fadeInVolume(paddingTemp);
+
+    // set up fading out near end
+    var timestampCheck = setInterval(function() {
+      if (Math.round(player.getCurrentTime()) == getEndSeconds(currentVideo) - paddingTemp) {
+        clearInterval(timestampCheck);
+        fadeOutVolume(paddingTemp);
+      }
+    }, 1000)
+  }
+
+  // autoplay next video after current video ends
   if (event.data === YT.PlayerState.ENDED && Math.round(player.getCurrentTime()) == endSecondsTemp && currentVideoIndex < playlist.length - 1) {
       currentVideoIndex++;
       loadVideo(playlist[currentVideoIndex]);
@@ -151,3 +169,30 @@ $('#settings *').on('change', function() {
   settings.dp = $('input#dp').prop('checked');
   settings.padding = parseInt($('select#padding').val());
 });
+
+// fade video volume in and out
+var timer;
+function fadeInVolume(duration) {
+  var currentVolume = player.getVolume();
+  if (currentVolume === 100) {
+    clearTimeout(timer);
+    return;
+  } else {
+    player.setVolume(currentVolume + 1);
+    timer = setTimeout(function() {
+      return fadeInVolume(duration);
+    }, duration*10);
+  }
+};
+function fadeOutVolume(duration) {
+  var currentVolume = player.getVolume();
+  if (currentVolume === 0) {
+    clearTimeout(timer);
+    return;
+  } else {
+    player.setVolume(currentVolume - 1);
+    timer = setTimeout(function() {
+      return fadeOutVolume(duration);
+    }, duration*10);
+  }
+};
