@@ -63,6 +63,11 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     width: '640',
     height: '390',
+    playerVars: {
+      'controls': 0,
+      'showinfo': 0,
+      'rel': 0
+    },
     events: {
       'onReady': onPlayerReady,
       'onStateChange': onPlayerStateChange,
@@ -87,7 +92,7 @@ function onPlayerStateChange(event) {
 
     // set up fading out near end
     var timestampCheck = setInterval(function() {
-      if (Math.round(player.getCurrentTime()) == getEndSeconds(currentVideo) - paddingTemp) {
+      if (Math.round(player.getCurrentTime()) == endSecondsTemp - paddingTemp) {
         clearInterval(timestampCheck);
         fadeOutVolume(paddingTemp);
       }
