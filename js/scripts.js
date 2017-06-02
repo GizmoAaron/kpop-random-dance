@@ -117,7 +117,7 @@ function loadVideo(videoObj) {
     countdown.play();
     countdown.addEventListener('ended', function() {
       player.loadVideoById({
-        'videoId': dpOK(videoObj) ? videoObj.dpid : videoObj.mvid,
+        'videoId': useDP(videoObj) ? videoObj.dpid : videoObj.mvid,
         'startSeconds': getStartSeconds(videoObj),
         'endSeconds': getEndSeconds(videoObj),
         'suggestedQuality': 'large'
@@ -125,7 +125,7 @@ function loadVideo(videoObj) {
     });
   } else {
     player.loadVideoById({
-      'videoId': dpOK(videoObj) ? videoObj.dpid : videoObj.mvid,
+      'videoId': useDP(videoObj) ? videoObj.dpid : videoObj.mvid,
       'startSeconds': getStartSeconds(videoObj),
       'endSeconds': getEndSeconds(videoObj),
       'suggestedQuality': 'large'
@@ -133,7 +133,7 @@ function loadVideo(videoObj) {
   }
   
   // mirror the dance practice video if not already mirrored
-  if (dpOK(videoObj) && videoObj.mirror == 'FALSE')
+  if (useDP(videoObj) && videoObj.mirror == 'FALSE')
     $('#player').addClass('mirror');
   else
     $('#player').removeClass('mirror');
@@ -158,14 +158,14 @@ function toSeconds(timestamp) {
 };
 
 // helper functions
-function dpOK(videoObj) {
-  return settings.dp && videoObj.dpid !== '';
+function useDP(videoObj) {
+  return (settings.dp || videoObj.mvid == '') && videoObj.dpid !== '';
 }
 function getStartSeconds(videoObj) {
-  return toSeconds(dpOK(videoObj) ? videoObj.dpstart : videoObj.mvstart) - settings.padding;
+  return toSeconds(useDP(videoObj) ? videoObj.dpstart : videoObj.mvstart) - settings.padding;
 };
 function getEndSeconds(videoObj) {
-  return toSeconds(dpOK(videoObj) ? videoObj.dpend : videoObj.mvend) + settings.padding;
+  return toSeconds(useDP(videoObj) ? videoObj.dpend : videoObj.mvend) + settings.padding;
 };
 
 // update settings
